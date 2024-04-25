@@ -1,0 +1,153 @@
+---
+title: "Active or Not?: Kids' Dwindling Physical Activity Rates"
+subtitle: "Understanding Changing Rates of Physical Activity in School Going Children"
+author: "Robert Smith"
+date: "2024-04-24"
+format: 
+  html:
+    theme: minty
+    backgroundcolor: lightgreen
+    toc: true
+execute: 
+  echo: false
+  warning: false
+  message: false
+---
+
+```{r}
+#| label: setup
+#| include: false
+
+# libraries
+library(tidyverse)
+library(countrycode)
+library(plotly)
+
+# data
+unicef_indicator_2 <- read_csv("unicef_indicator_2.csv")
+obs_value <- unicef_indicator_2 %>%
+  filter(time_period == 2016)
+map_world <- map_data("world")
+
+```
+
+<p style="color: grey; font-size: 20px;">
+Welcome to the ***Quarto Report*** based on relevant, recent data sourced by <span style="color: black; font-weight: bold;">Unicef</span> regarding the levels of <span style="color: blue; font-weight: bold;">insufficient physical activity</span> among school-going children around the world. We live in a culturally rich, diverse, and intriguing world with ever-changing landscapes and norms. But from the below <span style="color: blue; font-weight: bold;">map</span>, <span style="color: blue; font-weight: bold;">charts</span>, and <span style="color: blue; font-weight: bold;">scatterplot</span>, we'll see how levels of physical activity for school children have changed over the years. It's important to note that many factors outside of the given data, such as; 
+
+- <span style="color: red; font-weight: bold;">war</span> 
+- <span style="color: red; font-weight: bold;">famine</span> 
+- <span style="color: red; font-weight: bold;">poverty</span>, 
+- <span style="color: red; font-weight: bold;">displacement</span> 
+- <span style="color: red; font-weight: bold;">political context</span> 
+
+should also guide us in our interpretation of the changing figures.
+</p>
+
+## View of the Landscape of Data ##
+
+
+```{r} 
+#| fig-cap: "***Starting with the world map, we can see the countries which the data was collected from.***"
+#| 
+
+map_data_join <- full_join(obs_value, map_world, by = c("country" = "region"))
+relationship = "many-to-many"
+unicef_indicator_2 <- unicef_indicator_2 %>%
+  mutate(continent = countrycode(country, "country.name", "continent"))
+
+ggplot(map_data_join) +
+  aes(x = long, y = lat, group = group) +
+  geom_polygon(aes(fill = obs_value)) +
+  scale_fill_gradient(low = "yellow", high = "red", na.value = "grey") +
+  labs(
+    title = "Insufficient Activity Levels of Kids Aged 11-17 in 2016",
+    subtitle = "Countries in grey have no data due to insufficient research",
+    caption = "Source = Unicef Indicator 2",
+    x = "longitude",
+    y = "latitude",
+    fill = "obs_value",
+  ) +
+  theme_dark()
+
+```
+
+<p style="color: grey; font-size: 18px;">
+We can view through the various countries the changing levels of <span style="color: khaki; font-weight: bold;">insufficient activity</span> among the children in the map. Some trends can be viewed, such that we see its <span style="color: red; font-weight: bold;">higher levels</span> of insufficient activity in the southern hemisphere countries. The contributing factors to this may include a multitude of aforementioned factors. 
+</p>
+
+
+```{r}
+#| fig-cap: "***The timeseries here depicts how the disparity between the highest and lowest observable values contineus to increase. While in more Western regions it's typical to see rates get lower, it seems that for countries in Asia and Africa, the rates continue to rise.***"
+#| 
+timeseries_plot_1 <- unicef_indicator_2 %>%
+  ggplot() +
+  aes(time_period, obs_value, group = country, color = continent) +
+  geom_line() +
+  labs(
+    title = "Insufficient Activity % of Countries from 2001 to 2016",
+    caption = "Source = Unicef Indicator 2",
+    x = "Time Period",
+    y = "Observable Value",
+    color = "Continent"
+    ) +
+    theme_dark()
+
+ggplotly(timeseries_plot_1)
+
+```
+
+## Future Projection of Kids' Active Lifestyles ##
+```{r}
+#| fig-cap: "***From the relevant Scatter Plot, we can see that despite the consistency high levels of insufficient activity in each geographic location, the correlation between the observable value and time shows that the trend some areas are improving as opposed to others.***" 
+#| 
+
+ggplot(unicef_indicator_2) +
+  aes(obs_value, time_period, color = continent) +
+  geom_point() +
+  labs(
+    x = "Observable Value",
+    y = "Time Period",
+    title = "Evolution of the Insuffient Physical Activity % in Relation to Time"
+  ) +
+  theme_dark()
+
+```
+
+```{r}
+#| fig-cap: "***The bar chart demonstrates the consistent rate at which insufficient physical activity has been present in adolescents throughout the years.***"
+#| 
+
+unicef_indicator_2 %>%
+  group_by(continent, time_period) %>%
+  summarise(m_obsvalue = mean(obs_value, na.rm = TRUE)) %>%
+  ggplot() +
+  aes(reorder(continent,m_obsvalue), m_obsvalue, fill = continent) +
+  geom_col() +
+  facet_wrap(~ time_period, nrow = 2) +
+  labs(
+    x = "",
+    y = "Average Observable Value",
+    fill = "Continent",
+    title = "Evolution of Insuficent Physical Activity Per Continent From 2001 to 2016"
+  ) +
+  theme_dark() +
+  theme(
+    text = element_text(family = "serif"),
+    axis.text.x = element_blank()
+  ) +
+  scale_fill_manual(values = c("pink", "khaki", "lightblue", "lavender", "palegreen"))
+
+```
+
+## Conclusion and Suggestions ##
+<p style="color: grey; font-size: 20px;">
+Looking at the average based off the given continents, we can see consistent themes across the charts depicting how little has changed. A cause for concern here is that it indicates <span style="color: red; font-weight: bold;">external factors</span> in the continents must be at fault, such as <span style="color: red; font-weight: bold;">adequate capacity for education</span>, and <span style="color: red; font-weight: bold;">economic and political unrest</span>. We can see the largest disparity occurs between <span style="color: blue; font-weight: bold;">Europe</span> and <span style="color: green; font-weight: bold;">Africa</span>. This suggests that location and the surrounding living factors play a role in the levels of physical activity one partakes in.There are certain things these struggling areas could implement despite the obvious obstacles;
+
+- <span style="color: blue; font-weight: bold;">Enhanced attendance at schools</span> 
+- <span style="color: blue; font-weight: bold;">Implementation of physical education</span> 
+- <span style="color: blue; font-weight: bold;">Meals in schools</span>, 
+- <span style="color: blue; font-weight: bold;">Positive reward systems</span> 
+
+</p>
+
+
